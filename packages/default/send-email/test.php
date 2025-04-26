@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/index.php';
 
@@ -13,12 +15,12 @@ if (!$data) {
 $args = [
     'smtp_server' => 'smtp.mailgun.org',
     'smtp_port' => 587,
-    'smtp_username' => '',
-    'smtp_password' => '',
+    'smtp_username' => '...',
+    'smtp_password' => '...',
 
     'subject' => 'Test email',
 
-    'sender_email' => '',
+    'sender_email' => '...',
     'sender_name' => 'Test Sender',
 
     'recipient_email' => 'egorsmkv@gmail.com',
@@ -33,3 +35,7 @@ $response = main($args);
 echo "Response:\n";
 
 print_r($response);
+
+$memory_usage = memory_get_usage();
+
+echo "Memory usage: " . ($memory_usage / 1024 / 1024) . " MB\n";

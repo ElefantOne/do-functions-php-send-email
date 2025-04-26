@@ -11,6 +11,9 @@ use Twig\Loader\FilesystemLoader;
 const OK = 1;
 const ERROR = -1;
 
+// Error reporting
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 /**
  * Just a wrapper function to return the response.
  *
