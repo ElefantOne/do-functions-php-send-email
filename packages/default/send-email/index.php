@@ -128,12 +128,12 @@ function send(array $args): array
         $args['smtp_port']
     );
     $transport = Transport::fromDsn($dsn);
-
     $mailer = new Mailer($transport);
 
     $from = new Address($args['sender_email'], $args['sender_name']);
     $to = new Address($args['recipient_email'], $args['recipient_name']);
 
+    // Compose the message
     $message = (new Email())
         ->subject($args['subject'])
         ->from($from)
@@ -141,6 +141,26 @@ function send(array $args): array
         ->text($txt)
         ->html($html);
 
+    // Attachments part
+    if (isset($args['attachments'])) {
+        foreach ($args['attachments'] as $attachment) {
+            if (!isset($attachment['filename'])) {
+                continue;
+            }
+
+            if (!isset($attachment['content'])) {
+                continue;
+            }
+
+            if (!isset($attachment['type'])) {
+                continue;
+            }
+
+            $message->attach($attachment['content'], $attachment['filename'], $attachment['type']);
+        }
+    }
+
+    // Send the message
     try {
         $mailer->send($message);
 

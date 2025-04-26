@@ -28,6 +28,14 @@ $args = [
 
     'template' => 'hello',
     'variables' => base64_encode($data),
+
+    'attachments' => [
+        [
+            'filename' => 'filename.pdf',
+            'content' => file_get_contents(__DIR__ . '/test.pdf'),
+            'type' => 'application/pdf',
+        ],
+    ],
 ];
 
 $response = main($args);
@@ -38,4 +46,4 @@ print_r($response);
 
 $memory_usage = memory_get_usage();
 
-echo "Memory usage: " . ($memory_usage / 1024 / 1024) . " MB\n";
+echo 'Memory usage: ' . ($memory_usage / 1024 / 1024) . " MB\n";
