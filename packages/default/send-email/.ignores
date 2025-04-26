@@ -1,1 +1,7 @@
+.php-cs-fixer.cache
+
 build.sh
+check-code.sh
+
+test.php
+phpcs.php

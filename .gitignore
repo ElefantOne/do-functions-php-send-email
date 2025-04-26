@@ -1,2 +1,3 @@
-packages/default/send-email/composer.lock
 packages/default/send-email/vendor/
+
+.php-cs-fixer.cache
