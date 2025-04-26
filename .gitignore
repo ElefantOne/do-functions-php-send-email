@@ -1,3 +1,4 @@
 packages/default/send-email/vendor/
 
 .php-cs-fixer.cache
+.deployed

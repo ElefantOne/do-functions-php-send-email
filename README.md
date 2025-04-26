@@ -2,10 +2,14 @@
 
 This function gives you the ability to send email messages via any SMTP server using own predefined HTML/TXT templates.
 
+## Requirements
+
+- DigitalOcean uses PHP 8.0.30
+
 ## Installation
 
 ```bash
-doctl serverless deploy do-functions-php-send-email/ --remote-build
+doctl serverless deploy . --remote-build
 ```
 
 ## Usage
