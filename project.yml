@@ -1,0 +1,9 @@
+packages:
+  - name: default
+    functions:
+      - name: send-email
+        runtime: php:8.2
+        web: true
+        limits:
+          timeout: 30000 # milliseconds
+          memory: 256 # megabytes
