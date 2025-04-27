@@ -1,0 +1,42 @@
+name: "Check Code"
+
+permissions:
+  contents: read
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./packages/default/send-email
+
+jobs:
+  check-code:
+    name: Check Code
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          extensions: mbstring, xml, zip, curl, gd, bcmath, exif, fileinfo, intl, json, mysqli, pdo_mysql, soap, sqlite3
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          composer global require enlightn/security-checker
+
+      - name: Check code
+        run: sh check-code.sh
+
+      - name: Check security
+        run: |
+          security-checker security:check composer.lock
+          composer audit
