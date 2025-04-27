@@ -1,5 +1,6 @@
 <?php
 
+use GuzzleHttp\Client;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Address;
@@ -160,11 +161,50 @@ function send(array $args): array
         }
     }
 
+    $filesStatuses = [];
+
+    if (isset($args['attachment_urls'])) {
+        // Create a Guzzle client
+        $client = new Client();
+
+        foreach ($args['attachment_urls'] as $attachment) {
+            if (!isset($attachment['filename'])) {
+                continue;
+            }
+
+            if (!isset($attachment['type'])) {
+                continue;
+            }
+
+            if (!isset($attachment['url'])) {
+                continue;
+            }
+
+            // Download using Guzzle
+            try {
+                $response = $client->get($attachment['url']);
+
+                $status = $response->getStatusCode();
+                $filesStatuses[] = $status;
+
+                if ($status !== 200) {
+                    continue;
+                }
+
+                $content = $response->getBody()->getContents();
+            } catch (Exception $e) {
+                return ['status' => ERROR, 'result' => 'Failed to download: ' . $e->getMessage()];
+            }
+
+            $message->attach($content, $attachment['filename'], $attachment['type']);
+        }
+    }
+
     // Send the message
     try {
         $mailer->send($message);
 
-        return ['status' => OK];
+        return ['status' => OK, 'filesStatuses' => $filesStatuses];
     } catch (Exception $e) {
         return ['status' => ERROR, 'result' => 'Failed to send: ' . $e->getMessage()];
     }

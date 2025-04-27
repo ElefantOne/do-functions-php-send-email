@@ -18,7 +18,7 @@ $args = [
     'smtp_username' => '...',
     'smtp_password' => '...',
 
-    'subject' => 'Test email',
+    'subject' => 'PDF file',
 
     'sender_email' => '...',
     'sender_name' => 'Test Sender',
@@ -29,10 +29,18 @@ $args = [
     'template' => 'hello',
     'variables' => base64_encode($data),
 
-    'attachments' => [
+    // 'attachments' => [
+    //     [
+    //         'filename' => 'filename.pdf',
+    //         'content' => file_get_contents(__DIR__ . '/test.pdf'),
+    //         'type' => 'application/pdf',
+    //     ],
+    // ],
+
+    'attachment_urls' => [
         [
-            'filename' => 'filename.pdf',
-            'content' => file_get_contents(__DIR__ . '/test.pdf'),
+            'filename' => 'test.pdf',
+            'url' => 'https://raw.githubusercontent.com/egorsmkv/do-functions-php-send-email/refs/heads/main/packages/default/send-email/test.pdf',
             'type' => 'application/pdf',
         ],
     ],
