@@ -15,5 +15,5 @@ doctl serverless deploy . --remote-build
 ## Usage
 
 ```shell
-php test.php | bash
+php test.php
 ```
