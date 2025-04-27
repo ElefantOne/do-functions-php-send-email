@@ -6,7 +6,7 @@ name: send_email
 
 functions:
 - github:
-    branch: master
+    branch: main
     deploy_on_push: true
     repo: egorsmkv/do-functions-php-send-email
   name: send_email-api
