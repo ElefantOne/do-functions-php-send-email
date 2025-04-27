@@ -1,6 +1,6 @@
 # `do-functions-php-send-email`
 
-This function gives you the ability to send email messages via any SMTP server using own predefined HTML/TXT templates.
+A serverless function to send emails with attachments (optional).
 
 ## Requirements
 
