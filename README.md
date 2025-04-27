@@ -4,7 +4,7 @@ A serverless function to send emails with attachments (optional).
 
 ## Requirements
 
-- DigitalOcean uses PHP 8.0.30
+- DigitalOcean uses PHP 8.0.x
 
 ## Installation
 
