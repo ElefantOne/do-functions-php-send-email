@@ -12,11 +12,14 @@ use Twig\Loader\FilesystemLoader;
 const OK = 1;
 const ERROR = -1;
 
+// Templates path
+const TEMPLATES_DIR = __DIR__ . '/templates';
+
 // Error reporting
 error_reporting(E_ALL & ~E_DEPRECATED);
 
 /**
- * Just a wrapper function to return the response.
+ * Wraps the response in a consistent format.
  *
  * @param array $args Arguments to be returned
  *
@@ -36,51 +39,16 @@ function wrap(array $args) : array
  */
 function main(array $args) : array
 {
-    // SMTP arguments
-    if (!isset($args['smtp_server'])) {
-        return wrap(['error' => 'Please supply smtp_server argument.']);
-    }
+    $requiredArgs = [
+        'smtp_server', 'smtp_port', 'smtp_username', 'smtp_password',
+        'subject', 'sender_email', 'sender_name', 'recipient_email', 'recipient_name',
+        'template', 'variables',
+    ];
 
-    if (!isset($args['smtp_port'])) {
-        return wrap(['error' => 'Please supply smtp_port argument.']);
-    }
-
-    if (!isset($args['smtp_username'])) {
-        return wrap(['error' => 'Please supply smtp_username argument.']);
-    }
-
-    if (!isset($args['smtp_password'])) {
-        return wrap(['error' => 'Please supply smtp_password argument.']);
-    }
-
-    // Email message argument
-    if (!isset($args['subject'])) {
-        return wrap(['error' => 'Please supply subject argument.']);
-    }
-
-    if (!isset($args['sender_email'])) {
-        return wrap(['error' => 'Please supply sender_email argument.']);
-    }
-
-    if (!isset($args['sender_name'])) {
-        return wrap(['error' => 'Please supply sender_name argument.']);
-    }
-
-    if (!isset($args['recipient_email'])) {
-        return wrap(['error' => 'Please supply recipient_email argument.']);
-    }
-
-    if (!isset($args['recipient_name'])) {
-        return wrap(['error' => 'Please supply recipient_name argument.']);
-    }
-
-    // Template variables
-    if (!isset($args['template'])) {
-        return wrap(['error' => 'Please supply template argument.']);
-    }
-
-    if (!isset($args['variables'])) {
-        return wrap(['error' => 'Please supply variables argument.']);
+    foreach ($requiredArgs as $arg) {
+        if (!isset($args[$arg])) {
+            return wrap(['error' => "Please supply {$arg} argument."]);
+        }
     }
 
     // Send the message
@@ -90,7 +58,7 @@ function main(array $args) : array
 }
 
 /**
- * Send email using SMTP server.
+ * Sends an email using the provided SMTP server and message details.
  *
  * @param array $args SMTP server and email message arguments
  *
@@ -99,7 +67,7 @@ function main(array $args) : array
 function send(array $args): array
 {
     // Templates part
-    $loader = new FilesystemLoader(__DIR__ . '/templates');
+    $loader = new FilesystemLoader(TEMPLATES_DIR);
     $twig = new Environment($loader, [
         'cache' => '/tmp',
     ]);
@@ -107,15 +75,31 @@ function send(array $args): array
     $templateNameHTML = sprintf('%s/content.html', $args['template']);
     $templateNameTXT = sprintf('%s/content.txt', $args['template']);
 
-    if (!file_exists(__DIR__ . '/templates/' . $templateNameHTML)) {
+    $pathTemplateNameHTML = TEMPLATES_DIR . '/' . $templateNameHTML;
+    $pathTemplateNameTXT = TEMPLATES_DIR . '/' . $templateNameTXT;
+
+    if (!file_exists($pathTemplateNameHTML)) {
         return ['status' => ERROR, 'result' => 'template (HTML) does not exist'];
     }
-    if (!file_exists(__DIR__ . '/templates/' . $templateNameTXT)) {
+    if (!file_exists($pathTemplateNameTXT)) {
         return ['status' => ERROR, 'result' => 'template (TXT) does not exist'];
     }
 
     // Render tempalates
-    $variables = (array) json_decode(base64_decode($args['variables']));
+    $decoded = base64_decode($args['variables'], true);
+    if ($decoded === false) {
+        return ['status' => ERROR, 'result' => 'Failed to decode variables'];
+    }
+
+    $variables = json_decode($decoded, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return ['status' => ERROR, 'result' => 'Failed to parse variables'];
+    }
+
+    // $variables must be an array
+    if (!is_array($variables)) {
+        return ['status' => ERROR, 'result' => 'Variables must be an array'];
+    }
 
     $html = $twig->render($templateNameHTML, $variables);
     $txt = $twig->render($templateNameTXT, $variables);
@@ -145,15 +129,8 @@ function send(array $args): array
     // Attachments part
     if (isset($args['attachments'])) {
         foreach ($args['attachments'] as $attachment) {
-            if (!isset($attachment['filename'])) {
-                continue;
-            }
-
-            if (!isset($attachment['content'])) {
-                continue;
-            }
-
-            if (!isset($attachment['type'])) {
+            if (!isset($attachment['filename'], $attachment['content'], $attachment['type'])) {
+                error_log('Invalid attachment data: ' . json_encode($attachment));
                 continue;
             }
 
@@ -168,15 +145,8 @@ function send(array $args): array
         $client = new Client();
 
         foreach ($args['attachment_urls'] as $attachment) {
-            if (!isset($attachment['filename'])) {
-                continue;
-            }
-
-            if (!isset($attachment['type'])) {
-                continue;
-            }
-
-            if (!isset($attachment['url'])) {
+            if (!isset($attachment['filename'], $attachment['type'], $attachment['url'])) {
+                error_log('Invalid attachment data: ' . json_encode($attachment));
                 continue;
             }
 
@@ -188,6 +158,8 @@ function send(array $args): array
                 $filesStatuses[] = $status;
 
                 if ($status !== 200) {
+                    error_log("Failed to download {$attachment['url']}: Status {$status}");
+
                     continue;
                 }
 
@@ -200,7 +172,7 @@ function send(array $args): array
         }
     }
 
-    // Send the message
+    // Send the email
     try {
         $mailer->send($message);
 
