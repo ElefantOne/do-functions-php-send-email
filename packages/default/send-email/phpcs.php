@@ -144,7 +144,4 @@ $finder = Finder::create()
 
 $config = new Config();
 
-return $config->setFinder($finder)
-    ->setRules($rules)
-    ->setRiskyAllowed(true)
-    ->setUsingCache(true);
+return $config->setFinder($finder)->setRules($rules)->setRiskyAllowed(true)->setUsingCache(true);

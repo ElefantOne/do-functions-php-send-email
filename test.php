@@ -14,18 +14,13 @@ $args = [
     'smtp_port' => 587,
     'smtp_username' => '...',
     'smtp_password' => '...',
-
     'subject' => 'PDF file test',
-
     'sender_email' => '...',
     'sender_name' => 'Test Sender',
-
     'recipient_email' => 'egorsmkv@gmail.com',
     'recipient_name' => 'Yehor Smoliakov',
-
     'template' => 'hello',
     'variables' => base64_encode($data),
-
     'attachment_urls' => [
         [
             'filename' => 'test_1.pdf',

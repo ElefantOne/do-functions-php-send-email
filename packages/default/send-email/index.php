@@ -10,6 +10,7 @@ use Twig\Loader\FilesystemLoader;
 
 // Statuses
 const OK = 1;
+
 const ERROR = -1;
 
 // Templates path
@@ -25,7 +26,7 @@ error_reporting(E_ALL & ~E_DEPRECATED);
  *
  * @return array Response with status and result
  */
-function wrap(array $args) : array
+function wrap(array $args): array
 {
     return ['body' => $args];
 }
@@ -37,12 +38,20 @@ function wrap(array $args) : array
  *
  * @return array Response with status and result
  */
-function main(array $args) : array
+function main(array $args): array
 {
     $requiredArgs = [
-        'smtp_server', 'smtp_port', 'smtp_username', 'smtp_password',
-        'subject', 'sender_email', 'sender_name', 'recipient_email', 'recipient_name',
-        'template', 'variables',
+        'smtp_server',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'subject',
+        'sender_email',
+        'sender_name',
+        'recipient_email',
+        'recipient_name',
+        'template',
+        'variables',
     ];
 
     foreach ($requiredArgs as $arg) {
@@ -110,7 +119,7 @@ function send(array $args): array
         $args['smtp_username'],
         $args['smtp_password'],
         $args['smtp_server'],
-        $args['smtp_port']
+        $args['smtp_port'],
     );
     $transport = Transport::fromDsn($dsn);
     $mailer = new Mailer($transport);

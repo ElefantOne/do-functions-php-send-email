@@ -17,18 +17,13 @@ $args = [
     'smtp_port' => 587,
     'smtp_username' => '...',
     'smtp_password' => '...',
-
     'subject' => 'PDF file',
-
     'sender_email' => '...',
     'sender_name' => 'Test Sender',
-
     'recipient_email' => 'egorsmkv@gmail.com',
     'recipient_name' => 'Yehor Smoliakov',
-
     'template' => 'hello',
     'variables' => base64_encode($data),
-
     // 'attachments' => [
     //     [
     //         'filename' => 'filename.pdf',
@@ -54,4 +49,4 @@ print_r($response);
 
 $memory_usage = memory_get_usage();
 
-echo 'Memory usage: ' . ($memory_usage / 1024 / 1024) . " MB\n";
+echo 'Memory usage: ' . (($memory_usage / 1024) / 1024) . " MB\n";
