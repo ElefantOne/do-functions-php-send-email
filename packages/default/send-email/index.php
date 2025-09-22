@@ -96,7 +96,7 @@ function send(array $args): array
 
     // Render tempalates
     $decoded = base64_decode($args['variables'], true);
-    if ($decoded === false) {
+    if (is_bool($decoded)) {
         return ['status' => ERROR, 'result' => 'Failed to decode variables'];
     }
 
@@ -109,6 +109,9 @@ function send(array $args): array
     if (!is_array($variables)) {
         return ['status' => ERROR, 'result' => 'Variables must be an array'];
     }
+
+    // Send the email
+    try {
 
     $html = $twig->render($templateNameHTML, $variables);
     $txt = $twig->render($templateNameTXT, $variables);
@@ -181,12 +184,11 @@ function send(array $args): array
         }
     }
 
-    // Send the email
-    try {
+    
         $mailer->send($message);
 
         return ['status' => OK, 'filesStatuses' => $filesStatuses];
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         return ['status' => ERROR, 'result' => 'Failed to send: ' . $e->getMessage()];
     }
 }

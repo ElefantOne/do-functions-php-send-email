@@ -12,10 +12,10 @@ if (!$data) {
 $args = [
     'smtp_server' => 'smtp.mailgun.org',
     'smtp_port' => 587,
-    'smtp_username' => '...',
-    'smtp_password' => '...',
+    'smtp_username' => '',
+    'smtp_password' => '',
     'subject' => 'PDF file test',
-    'sender_email' => '...',
+    'sender_email' => 'author@example.com',
     'sender_name' => 'Test Sender',
     'recipient_email' => 'egorsmkv@gmail.com',
     'recipient_name' => 'Yehor Smoliakov',

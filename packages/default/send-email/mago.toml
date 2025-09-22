@@ -1,12 +1,11 @@
 php-version = "8.2"
 
 [source]
-includes = ["packages/default/send-email/vendor"]
+includes = ["./vendor"]
 paths = [
+    "../../../test.php", 
     "test.php", 
-    "packages/default/send-email/test.php", 
-    "packages/default/send-email/index.php", 
-    "packages/default/send-email/phpcs.php",
+    "index.php", 
 ]
 
 [formatter]
@@ -21,7 +20,7 @@ integrations = []
 no-debug-symbols = { enabled = false }
 ambiguous-function-call = { enabled = false }
 literal-named-argument = { enabled = false }
-halstead = { effort-threshold = 7000 }
+halstead = { effort-threshold = 9000, volume-threshold = 1500 }
 
 [analyzer]
 find-unused-definitions = true

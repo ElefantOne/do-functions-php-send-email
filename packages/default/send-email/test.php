@@ -15,10 +15,10 @@ if (!$data) {
 $args = [
     'smtp_server' => 'smtp.mailgun.org',
     'smtp_port' => 587,
-    'smtp_username' => '...',
-    'smtp_password' => '...',
+    'smtp_username' => '',
+    'smtp_password' => '',
     'subject' => 'PDF file',
-    'sender_email' => '...',
+    'sender_email' => 'author@example.com',
     'sender_name' => 'Test Sender',
     'recipient_email' => 'egorsmkv@gmail.com',
     'recipient_name' => 'Yehor Smoliakov',
@@ -48,5 +48,6 @@ echo "Response:\n";
 print_r($response);
 
 $memory_usage = memory_get_usage();
+$memory_usage = (string) (($memory_usage / 1024) / 1024);
 
-echo 'Memory usage: ' . (($memory_usage / 1024) / 1024) . " MB\n";
+echo 'Memory usage: ' . $memory_usage . " MB\n";

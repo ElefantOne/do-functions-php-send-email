@@ -6,7 +6,11 @@
         "guzzlehttp/guzzle": "7.10.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3",
-        "phpstan/phpstan": "^2"
+        "carthage-software/mago": "1.0.0-beta.18"
+    },
+    "config": {
+        "allow-plugins": {
+            "carthage-software/mago": true
+        }
     }
 }
