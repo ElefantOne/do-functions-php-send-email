@@ -1,7 +1,7 @@
 {
     "require": {
         "php": ">=8.2",
-        "twig/twig": "3.22.0",
+        "twig/twig": "3.22.1",
         "symfony/mailer": "7.3.5",
         "guzzlehttp/guzzle": "7.10.0"
     },
