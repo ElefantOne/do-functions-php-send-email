@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "637807da6f4537887f5a28d5822102fd",
+    "content-hash": "e49238d039888d51f3d11ad3a18856af",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -1737,21 +1737,21 @@
     "packages-dev": [
         {
             "name": "carthage-software/mago",
-            "version": "1.0.0-beta.18",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carthage-software/mago.git",
-                "reference": "c6f8c5fbc1e34ad8b35352602180dd1da08c51e9"
+                "reference": "eeb4090834bfad5001ecaea967e91044dc344a8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carthage-software/mago/zipball/c6f8c5fbc1e34ad8b35352602180dd1da08c51e9",
-                "reference": "c6f8c5fbc1e34ad8b35352602180dd1da08c51e9",
+                "url": "https://api.github.com/repos/carthage-software/mago/zipball/eeb4090834bfad5001ecaea967e91044dc344a8e",
+                "reference": "eeb4090834bfad5001ecaea967e91044dc344a8e",
                 "shasum": ""
             },
             "require": {
                 "composer-plugin-api": "^2.6",
-                "php": "~8.1 || ~8.2 || ~8.3 || ~8.4"
+                "php": "~8.1 || ~8.2 || ~8.3 || ~8.4 || ~8.5 || ~8.6"
             },
             "require-dev": {
                 "composer/composer": "^2.8"
@@ -1784,7 +1784,7 @@
             ],
             "support": {
                 "issues": "https://github.com/carthage-software/mago/issues",
-                "source": "https://github.com/carthage-software/mago/tree/1.0.0-beta.18"
+                "source": "https://github.com/carthage-software/mago/tree/1.0.2"
             },
             "funding": [
                 {
@@ -1792,14 +1792,12 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-22T00:04:38+00:00"
+            "time": "2025-12-22T14:52:26+00:00"
         }
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "carthage-software/mago": 10
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
