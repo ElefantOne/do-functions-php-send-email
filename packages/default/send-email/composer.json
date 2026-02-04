@@ -6,7 +6,7 @@
         "guzzlehttp/guzzle": "7.10.0"
     },
     "require-dev": {
-        "carthage-software/mago": "1.2.2"
+        "carthage-software/mago": "1.4.1"
     },
     "config": {
         "allow-plugins": {
