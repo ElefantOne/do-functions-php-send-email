@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use GuzzleHttp\Client;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
@@ -86,7 +88,7 @@ function main(array $args): array
     ];
 
     foreach ($requiredArgs as $arg) {
-        if (!isset($args[$arg])) {
+        if (!array_key_exists($arg, $args) || $args[$arg] === null) {
             return wrap(['error' => "Please supply {$arg} argument."]);
         }
     }
@@ -156,7 +158,6 @@ function send(array $args): array
         return ['status' => ERROR, 'result' => 'Variables must be an array'];
     }
 
-    /** @var array $variables */
     $variables = $decoded_json;
 
     // Send the email
@@ -187,9 +188,13 @@ function send(array $args): array
             ->html($html);
 
         // Attachments part
-        if (isset($args['attachments'])) {
+        if (array_key_exists('attachments', $args) && $args['attachments'] !== null) {
             foreach ($args['attachments'] as $attachment) {
-                if (!isset($attachment['filename'], $attachment['content'], $attachment['type'])) {
+                if (
+                    !array_key_exists('filename', $attachment) || $attachment['filename'] === null ||
+                    !array_key_exists('content', $attachment) || $attachment['content'] === null ||
+                    !array_key_exists('type', $attachment) || $attachment['type'] === null
+                ) {
                     error_log('Invalid attachment data: ' . dump($attachment));
                     continue;
                 }
@@ -200,12 +205,16 @@ function send(array $args): array
 
         $filesStatuses = [];
 
-        if (isset($args['attachment_urls'])) {
+        if (array_key_exists('attachment_urls', $args) && $args['attachment_urls'] !== null) {
             // Create a Guzzle client
             $client = new Client();
 
             foreach ($args['attachment_urls'] as $attachment) {
-                if (!isset($attachment['filename'], $attachment['type'], $attachment['url'])) {
+                if (
+                    !array_key_exists('filename', $attachment) || $attachment['filename'] === null ||
+                    !array_key_exists('type', $attachment) || $attachment['type'] === null ||
+                    !array_key_exists('url', $attachment) || $attachment['url'] === null
+                ) {
                     error_log('Invalid attachment data: ' . dump($attachment));
                     continue;
                 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require __DIR__ . '/packages/default/send-email/vendor/autoload.php';
 
 // Constants
