@@ -182,7 +182,7 @@ function render_templates(string $template, array $variables): array
 /**
  * Creates and configures a mailer instance.
  *
- * @param array $args SMTP configuration arguments
+ * @param array{smtp_server: string, smtp_port: int|string, smtp_username: string, smtp_password: string} $args SMTP configuration arguments
  *
  * @return Mailer Configured mailer instance
  */
@@ -203,7 +203,7 @@ function create_mailer(array $args): Mailer
 /**
  * Composes an email message with the provided content.
  *
- * @param array $args Email arguments
+ * @param array{subject: string, sender_email: string, sender_name: string, recipient_email: string, recipient_name: string} $args Email arguments
  * @param string $html HTML content
  * @param string $txt Text content
  *
