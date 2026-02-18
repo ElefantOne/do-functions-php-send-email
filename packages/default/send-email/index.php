@@ -233,7 +233,7 @@ function validateAttachmentFields(mixed $attachment, array $requiredFields): boo
     }
 
     foreach ($requiredFields as $field) {
-        if (!array_key_exists($field, $attachment) || $attachment[$field] === null) {
+        if (!array_key_exists($field, $attachment) || $attachment[$field] === null || !is_string($attachment[$field])) {
             return false;
         }
     }
@@ -264,12 +264,11 @@ function processDirectAttachments(Email $message, array $args): void
             continue;
         }
 
-        // At this point we know $attachment is an array with the required fields
-        assert(is_array($attachment));
+        // validateAttachmentFields ensures $attachment is an array with string values
         $message->attach(
-            (string) $attachment['content'],
-            (string) $attachment['filename'],
-            (string) $attachment['type']
+            $attachment['content'],
+            $attachment['filename'],
+            $attachment['type']
         );
     }
 }
@@ -305,11 +304,9 @@ function processAttachmentUrls(Email $message, array $args): array
             continue;
         }
 
-        // At this point we know $attachment is an array with the required fields
-        assert(is_array($attachment));
-
+        // validateAttachmentFields ensures $attachment is an array with string values
         try {
-            $response = $client->get((string) $attachment['url']);
+            $response = $client->get($attachment['url']);
             $status = $response->getStatusCode();
             $filesStatuses[] = $status;
 
@@ -321,8 +318,8 @@ function processAttachmentUrls(Email $message, array $args): array
             $content = $response->getBody()->getContents();
             $message->attach(
                 $content,
-                (string) $attachment['filename'],
-                (string) $attachment['type']
+                $attachment['filename'],
+                $attachment['type']
             );
         } catch (Exception $e) {
             return [
