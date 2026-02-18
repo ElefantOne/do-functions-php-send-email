@@ -88,7 +88,7 @@ function main(array $args): array
     ];
 
     foreach ($requiredArgs as $arg) {
-        if (!array_key_exists($arg, $args) || $args[$arg] === null) {
+        if (!array_key_exists($arg, $args)) {
             return wrap(['error' => "Please supply {$arg} argument."]);
         }
     }
@@ -158,6 +158,10 @@ function parse_variables(string $encodedVariables): array
  * @param array<array-key, mixed> $variables Variables to render
  *
  * @return array{html: string, txt: string} Rendered content
+ *
+ * @throws \Twig\Error\LoaderError
+ * @throws \Twig\Error\RuntimeError
+ * @throws \Twig\Error\SyntaxError
  */
 function render_templates(string $template, array $variables): array
 {
