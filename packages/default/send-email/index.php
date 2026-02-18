@@ -182,18 +182,28 @@ function render_templates(string $template, array $variables): array
 /**
  * Creates and configures a mailer instance.
  *
- * @param array $args SMTP configuration arguments
+ * @param array<array-key, mixed> $args SMTP configuration arguments
  *
  * @return Mailer Configured mailer instance
  */
 function create_mailer(array $args): Mailer
 {
+    // Type assertions for mago analyzer
+    /** @var string $username */
+    $username = $args['smtp_username'];
+    /** @var string $password */
+    $password = $args['smtp_password'];
+    /** @var string $server */
+    $server = $args['smtp_server'];
+    /** @var int|string $port */
+    $port = $args['smtp_port'];
+    
     $dsn = sprintf(
         'smtp://%s:%s@%s:%s',
-        $args['smtp_username'],
-        $args['smtp_password'],
-        $args['smtp_server'],
-        $args['smtp_port'],
+        $username,
+        $password,
+        $server,
+        $port,
     );
     $transport = Transport::fromDsn($dsn);
 
@@ -203,7 +213,7 @@ function create_mailer(array $args): Mailer
 /**
  * Composes an email message with the provided content.
  *
- * @param array $args Email arguments
+ * @param array<array-key, mixed> $args Email arguments
  * @param string $html HTML content
  * @param string $txt Text content
  *
@@ -211,11 +221,23 @@ function create_mailer(array $args): Mailer
  */
 function compose_email(array $args, string $html, string $txt): Email
 {
-    $from = new Address($args['sender_email'], $args['sender_name']);
-    $to = new Address($args['recipient_email'], $args['recipient_name']);
+    // Type assertions for mago analyzer
+    /** @var string $senderEmail */
+    $senderEmail = $args['sender_email'];
+    /** @var string $senderName */
+    $senderName = $args['sender_name'];
+    /** @var string $recipientEmail */
+    $recipientEmail = $args['recipient_email'];
+    /** @var string $recipientName */
+    $recipientName = $args['recipient_name'];
+    /** @var string $subject */
+    $subject = $args['subject'];
+    
+    $from = new Address($senderEmail, $senderName);
+    $to = new Address($recipientEmail, $recipientName);
 
     return (new Email())
-        ->subject($args['subject'])
+        ->subject($subject)
         ->from($from)
         ->to($to)
         ->text($txt)
