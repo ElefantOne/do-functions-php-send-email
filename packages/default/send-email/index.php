@@ -104,9 +104,9 @@ function main(array $args): array
  *
  * @param string $template Template name
  *
- * @return array|null Error array if validation fails, null if successful
+ * @return array{status: int, result: string}|null Error array if validation fails, null if successful
  */
-function validateTemplates(string $template): ?array
+function validate_templates(string $template): ?array
 {
     $templateNameHTML = sprintf('%s/content.html', $template);
     $templateNameTXT = sprintf('%s/content.txt', $template);
@@ -129,9 +129,9 @@ function validateTemplates(string $template): ?array
  *
  * @param string $encodedVariables Base64 encoded JSON string
  *
- * @return array{success: bool, data?: array<array-key, mixed>, error?: array{status: int, result: string}} Result with success flag and either data or error
+ * @return array{success: false, error: array{status: int, result: string}}|array{success: true, data: array<array-key, mixed>} Result with success flag and either data or error
  */
-function parseVariables(string $encodedVariables): array
+function parse_variables(string $encodedVariables): array
 {
     $decoded = base64_decode($encodedVariables, true);
     if (is_bool($decoded)) {
@@ -159,7 +159,7 @@ function parseVariables(string $encodedVariables): array
  *
  * @return array{html: string, txt: string} Rendered content
  */
-function renderTemplates(string $template, array $variables): array
+function render_templates(string $template, array $variables): array
 {
     $loader = new FilesystemLoader(TEMPLATES_DIR);
     $twig = new Environment($loader, [
@@ -182,7 +182,7 @@ function renderTemplates(string $template, array $variables): array
  *
  * @return Mailer Configured mailer instance
  */
-function createMailer(array $args): Mailer
+function create_mailer(array $args): Mailer
 {
     $dsn = sprintf(
         'smtp://%s:%s@%s:%s',
@@ -205,7 +205,7 @@ function createMailer(array $args): Mailer
  *
  * @return Email Configured email message
  */
-function composeEmail(array $args, string $html, string $txt): Email
+function compose_email(array $args, string $html, string $txt): Email
 {
     $from = new Address($args['sender_email'], $args['sender_name']);
     $to = new Address($args['recipient_email'], $args['recipient_name']);
@@ -226,7 +226,7 @@ function composeEmail(array $args, string $html, string $txt): Email
  *
  * @return bool True if valid, false otherwise
  */
-function validateAttachmentFields(mixed $attachment, array $requiredFields): bool
+function validate_attachment_fields(mixed $attachment, array $requiredFields): bool
 {
     if (!is_array($attachment)) {
         return false;
@@ -247,7 +247,7 @@ function validateAttachmentFields(mixed $attachment, array $requiredFields): boo
  * @param Email $message Email message to attach to
  * @param array<array-key, mixed> $args Email arguments
  */
-function processDirectAttachments(Email $message, array $args): void
+function process_direct_attachments(Email $message, array $args): void
 {
     if (!array_key_exists('attachments', $args) || $args['attachments'] === null) {
         return;
@@ -259,12 +259,13 @@ function processDirectAttachments(Email $message, array $args): void
     }
 
     foreach ($attachments as $attachment) {
-        if (!validateAttachmentFields($attachment, ['filename', 'content', 'type'])) {
+        if (!validate_attachment_fields($attachment, ['filename', 'content', 'type'])) {
             error_log('Invalid attachment data: ' . dump($attachment));
             continue;
         }
 
-        // validateAttachmentFields ensures $attachment is an array with string values
+        // validate_attachment_fields ensures $attachment is an array with string values
+        /** @var array{filename: string, content: string, type: string} $attachment */
         $message->attach(
             $attachment['content'],
             $attachment['filename'],
@@ -279,11 +280,11 @@ function processDirectAttachments(Email $message, array $args): void
  * @param Email $message Email message to attach to
  * @param array<array-key, mixed> $args Email arguments
  *
- * @return array{success: bool, filesStatuses?: array<int, int>, error?: array{status: int, result: string}} Result with status and file statuses
+ * @return array{success: false, error: array{status: int, result: string}}|array{success: true, filesStatuses: array<int, int>} Result with status and file statuses
  *
  * @throws \GuzzleHttp\Exception\GuzzleException
  */
-function processAttachmentUrls(Email $message, array $args): array
+function process_attachment_urls(Email $message, array $args): array
 {
     $filesStatuses = [];
 
@@ -299,13 +300,14 @@ function processAttachmentUrls(Email $message, array $args): array
     $client = new Client();
 
     foreach ($attachmentUrls as $attachment) {
-        if (!validateAttachmentFields($attachment, ['filename', 'type', 'url'])) {
+        if (!validate_attachment_fields($attachment, ['filename', 'type', 'url'])) {
             error_log('Invalid attachment data: ' . dump($attachment));
             continue;
         }
 
-        // validateAttachmentFields ensures $attachment is an array with string values
+        // validate_attachment_fields ensures $attachment is an array with string values
         try {
+            /** @var array{filename: string, type: string, url: string} $attachment */
             $response = $client->get($attachment['url']);
             $status = $response->getStatusCode();
             $filesStatuses[] = $status;
@@ -355,38 +357,31 @@ function processAttachmentUrls(Email $message, array $args): array
  */
 function send(array $args): array
 {
-    $validationError = validateTemplates($args['template']);
+    $validationError = validate_templates($args['template']);
     if ($validationError !== null) {
         return $validationError;
     }
 
-    $parsedVariables = parseVariables($args['variables']);
+    $parsedVariables = parse_variables($args['variables']);
     if (!$parsedVariables['success']) {
-        /** @var array{status: int, result: string} $error */
-        $error = $parsedVariables['error'];
-        return $error;
+        return $parsedVariables['error'];
     }
 
     try {
-        /** @var array<array-key, mixed> $variablesData */
-        $variablesData = $parsedVariables['data'];
-        $rendered = renderTemplates($args['template'], $variablesData);
-        $mailer = createMailer($args);
-        $message = composeEmail($args, $rendered['html'], $rendered['txt']);
+        $rendered = render_templates($args['template'], $parsedVariables['data']);
+        $mailer = create_mailer($args);
+        $message = compose_email($args, $rendered['html'], $rendered['txt']);
 
-        processDirectAttachments($message, $args);
+        process_direct_attachments($message, $args);
 
-        $attachmentResult = processAttachmentUrls($message, $args);
+        $attachmentResult = process_attachment_urls($message, $args);
         if (!$attachmentResult['success']) {
-            /** @var array{status: int, result: string} $error */
-            $error = $attachmentResult['error'];
-            return $error;
+            return $attachmentResult['error'];
         }
 
         $mailer->send($message);
 
-        /** @var array<int, int> $filesStatuses */
-        $filesStatuses = $attachmentResult['filesStatuses'] ?? [];
+        $filesStatuses = $attachmentResult['filesStatuses'];
         return ['status' => OK, 'filesStatuses' => $filesStatuses];
     } catch (Throwable $e) {
         return ['status' => ERROR, 'result' => 'Failed to send: ' . $e->getMessage()];
