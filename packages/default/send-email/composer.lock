@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "27efa8073af6dfe70daf65593528cd54",
+    "content-hash": "bf92f01e97a1235a5154348a4018af8a",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -1737,16 +1737,16 @@
     "packages-dev": [
         {
             "name": "carthage-software/mago",
-            "version": "1.7.0",
+            "version": "1.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carthage-software/mago.git",
-                "reference": "70d1644f55c5ad2a7e87c471df26ef927ab6d522"
+                "reference": "b50e6aa3e4e6abe144101720deddbf456cb7e0a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carthage-software/mago/zipball/70d1644f55c5ad2a7e87c471df26ef927ab6d522",
-                "reference": "70d1644f55c5ad2a7e87c471df26ef927ab6d522",
+                "url": "https://api.github.com/repos/carthage-software/mago/zipball/b50e6aa3e4e6abe144101720deddbf456cb7e0a1",
+                "reference": "b50e6aa3e4e6abe144101720deddbf456cb7e0a1",
                 "shasum": ""
             },
             "require": {
@@ -1764,6 +1764,9 @@
                 "class": "Mago\\MagoPlugin"
             },
             "autoload": {
+                "files": [
+                    "composer/functions.php"
+                ],
                 "psr-4": {
                     "Mago\\": "composer/"
                 }
@@ -1784,7 +1787,7 @@
             ],
             "support": {
                 "issues": "https://github.com/carthage-software/mago/issues",
-                "source": "https://github.com/carthage-software/mago/tree/1.7.0"
+                "source": "https://github.com/carthage-software/mago/tree/1.9.1"
             },
             "funding": [
                 {
@@ -1792,7 +1795,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-09T23:42:45+00:00"
+            "time": "2026-02-18T03:12:50+00:00"
         }
     ],
     "aliases": [],
