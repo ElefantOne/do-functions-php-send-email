@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use GuzzleHttp\Client;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
@@ -86,7 +88,7 @@ function main(array $args): array
     ];
 
     foreach ($requiredArgs as $arg) {
-        if (!isset($args[$arg])) {
+        if (!array_key_exists($arg, $args)) {
             return wrap(['error' => "Please supply {$arg} argument."]);
         }
     }
@@ -95,6 +97,245 @@ function main(array $args): array
     $result = send($args);
 
     return wrap(['response' => $result, 'version' => 1]);
+}
+
+/**
+ * Validates that templates exist.
+ *
+ * @param string $template Template name
+ *
+ * @return array{status: int, result: string}|null Error array if validation fails, null if successful
+ */
+function validate_templates(string $template): ?array
+{
+    $templateNameHTML = sprintf('%s/content.html', $template);
+    $templateNameTXT = sprintf('%s/content.txt', $template);
+
+    $pathTemplateNameHTML = TEMPLATES_DIR . '/' . $templateNameHTML;
+    $pathTemplateNameTXT = TEMPLATES_DIR . '/' . $templateNameTXT;
+
+    if (!file_exists($pathTemplateNameHTML)) {
+        return ['status' => ERROR, 'result' => 'template (HTML) does not exist'];
+    }
+    if (!file_exists($pathTemplateNameTXT)) {
+        return ['status' => ERROR, 'result' => 'template (TXT) does not exist'];
+    }
+
+    return null;
+}
+
+/**
+ * Parses and validates variables from base64 encoded JSON string.
+ *
+ * @param string $encodedVariables Base64 encoded JSON string
+ *
+ * @return array{success: false, error: array{status: int, result: string}}|array{success: true, data: array<array-key, mixed>} Result with success flag and either data or error
+ */
+function parse_variables(string $encodedVariables): array
+{
+    $decoded = base64_decode($encodedVariables, true);
+    if (is_bool($decoded)) {
+        return ['success' => false, 'error' => ['status' => ERROR, 'result' => 'Failed to decode variables']];
+    }
+
+    /** @var mixed $decoded_json */
+    $decoded_json = json_decode($decoded, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return ['success' => false, 'error' => ['status' => ERROR, 'result' => 'Failed to parse variables']];
+    }
+
+    if (!is_array($decoded_json)) {
+        return ['success' => false, 'error' => ['status' => ERROR, 'result' => 'Variables must be an array']];
+    }
+
+    return ['success' => true, 'data' => $decoded_json];
+}
+
+/**
+ * Renders templates with provided variables.
+ *
+ * @param string $template Template name
+ * @param array<array-key, mixed> $variables Variables to render
+ *
+ * @return array{html: string, txt: string} Rendered content
+ *
+ * @throws \Twig\Error\LoaderError
+ * @throws \Twig\Error\RuntimeError
+ * @throws \Twig\Error\SyntaxError
+ */
+function render_templates(string $template, array $variables): array
+{
+    $loader = new FilesystemLoader(TEMPLATES_DIR);
+    $twig = new Environment($loader, [
+        'cache' => '/tmp',
+    ]);
+
+    $templateNameHTML = sprintf('%s/content.html', $template);
+    $templateNameTXT = sprintf('%s/content.txt', $template);
+
+    $html = $twig->render($templateNameHTML, $variables);
+    $txt = $twig->render($templateNameTXT, $variables);
+
+    return ['html' => $html, 'txt' => $txt];
+}
+
+/**
+ * Creates and configures a mailer instance.
+ *
+ * @param array $args SMTP configuration arguments
+ *
+ * @return Mailer Configured mailer instance
+ */
+function create_mailer(array $args): Mailer
+{
+    $dsn = sprintf(
+        'smtp://%s:%s@%s:%s',
+        $args['smtp_username'],
+        $args['smtp_password'],
+        $args['smtp_server'],
+        $args['smtp_port'],
+    );
+    $transport = Transport::fromDsn($dsn);
+
+    return new Mailer($transport);
+}
+
+/**
+ * Composes an email message with the provided content.
+ *
+ * @param array $args Email arguments
+ * @param string $html HTML content
+ * @param string $txt Text content
+ *
+ * @return Email Configured email message
+ */
+function compose_email(array $args, string $html, string $txt): Email
+{
+    $from = new Address($args['sender_email'], $args['sender_name']);
+    $to = new Address($args['recipient_email'], $args['recipient_name']);
+
+    return (new Email())
+        ->subject($args['subject'])
+        ->from($from)
+        ->to($to)
+        ->text($txt)
+        ->html($html);
+}
+
+/**
+ * Validates attachment fields.
+ *
+ * @param mixed $attachment Attachment data
+ * @param array<int, string> $requiredFields Required field names
+ *
+ * @return bool True if valid, false otherwise
+ */
+function validate_attachment_fields(mixed $attachment, array $requiredFields): bool
+{
+    if (!is_array($attachment)) {
+        return false;
+    }
+
+    foreach ($requiredFields as $field) {
+        if (!array_key_exists($field, $attachment) || $attachment[$field] === null || !is_string($attachment[$field])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Processes direct attachments.
+ *
+ * @param Email $message Email message to attach to
+ * @param array<array-key, mixed> $args Email arguments
+ */
+function process_direct_attachments(Email $message, array $args): void
+{
+    if (!array_key_exists('attachments', $args) || $args['attachments'] === null) {
+        return;
+    }
+
+    $attachments = $args['attachments'];
+    if (!is_array($attachments)) {
+        return;
+    }
+
+    foreach ($attachments as $attachment) {
+        if (!validate_attachment_fields($attachment, ['filename', 'content', 'type'])) {
+            error_log('Invalid attachment data: ' . dump($attachment));
+            continue;
+        }
+
+        // validate_attachment_fields ensures $attachment is an array with string values
+        /** @var array{filename: string, content: string, type: string} $attachment */
+        $message->attach(
+            $attachment['content'],
+            $attachment['filename'],
+            $attachment['type']
+        );
+    }
+}
+
+/**
+ * Processes URL-based attachments.
+ *
+ * @param Email $message Email message to attach to
+ * @param array<array-key, mixed> $args Email arguments
+ *
+ * @return array{success: false, error: array{status: int, result: string}}|array{success: true, filesStatuses: array<int, int>} Result with status and file statuses
+ *
+ * @throws \GuzzleHttp\Exception\GuzzleException
+ */
+function process_attachment_urls(Email $message, array $args): array
+{
+    $filesStatuses = [];
+
+    if (!array_key_exists('attachment_urls', $args) || $args['attachment_urls'] === null) {
+        return ['success' => true, 'filesStatuses' => $filesStatuses];
+    }
+
+    $attachmentUrls = $args['attachment_urls'];
+    if (!is_array($attachmentUrls)) {
+        return ['success' => true, 'filesStatuses' => $filesStatuses];
+    }
+
+    $client = new Client();
+
+    foreach ($attachmentUrls as $attachment) {
+        if (!validate_attachment_fields($attachment, ['filename', 'type', 'url'])) {
+            error_log('Invalid attachment data: ' . dump($attachment));
+            continue;
+        }
+
+        // validate_attachment_fields ensures $attachment is an array with string values
+        try {
+            /** @var array{filename: string, type: string, url: string} $attachment */
+            $response = $client->get($attachment['url']);
+            $status = $response->getStatusCode();
+            $filesStatuses[] = $status;
+
+            if ($status !== 200) {
+                error_log("Failed to download {$attachment['url']}: Status {$status}");
+                continue;
+            }
+
+            $content = $response->getBody()->getContents();
+            $message->attach(
+                $content,
+                $attachment['filename'],
+                $attachment['type']
+            );
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => ['status' => ERROR, 'result' => 'Failed to download: ' . $e->getMessage()],
+            ];
+        }
+    }
+
+    return ['success' => true, 'filesStatuses' => $filesStatuses];
 }
 
 /**
@@ -116,124 +357,35 @@ function main(array $args): array
  *   attachment_urls?: array<int, array{filename: string, url: string, type: string}>
  * } $args SMTP server and email message arguments
  *
- * @return array Response with status and result
+ * @return array{status: int, result?: string, filesStatuses?: array<int, int>} Response with status and result
  */
 function send(array $args): array
 {
-    // Templates part
-    $loader = new FilesystemLoader(TEMPLATES_DIR);
-    $twig = new Environment($loader, [
-        'cache' => '/tmp',
-    ]);
-
-    $templateNameHTML = sprintf('%s/content.html', $args['template']);
-    $templateNameTXT = sprintf('%s/content.txt', $args['template']);
-
-    $pathTemplateNameHTML = TEMPLATES_DIR . '/' . $templateNameHTML;
-    $pathTemplateNameTXT = TEMPLATES_DIR . '/' . $templateNameTXT;
-
-    if (!file_exists($pathTemplateNameHTML)) {
-        return ['status' => ERROR, 'result' => 'template (HTML) does not exist'];
-    }
-    if (!file_exists($pathTemplateNameTXT)) {
-        return ['status' => ERROR, 'result' => 'template (TXT) does not exist'];
+    $validationError = validate_templates($args['template']);
+    if ($validationError !== null) {
+        return $validationError;
     }
 
-    // Render tempalates
-    $decoded = base64_decode($args['variables'], true);
-    if (is_bool($decoded)) {
-        return ['status' => ERROR, 'result' => 'Failed to decode variables'];
+    $parsedVariables = parse_variables($args['variables']);
+    if (!$parsedVariables['success']) {
+        return $parsedVariables['error'];
     }
 
-    /** @var mixed $decoded_json */
-    $decoded_json = json_decode($decoded, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        return ['status' => ERROR, 'result' => 'Failed to parse variables'];
-    }
-
-    // $decoded_json must be an array
-    if (!is_array($decoded_json)) {
-        return ['status' => ERROR, 'result' => 'Variables must be an array'];
-    }
-
-    /** @var array $variables */
-    $variables = $decoded_json;
-
-    // Send the email
     try {
-        $html = $twig->render($templateNameHTML, $variables);
-        $txt = $twig->render($templateNameTXT, $variables);
+        $rendered = render_templates($args['template'], $parsedVariables['data']);
+        $mailer = create_mailer($args);
+        $message = compose_email($args, $rendered['html'], $rendered['txt']);
 
-        // Email part
-        $dsn = sprintf(
-            'smtp://%s:%s@%s:%s',
-            $args['smtp_username'],
-            $args['smtp_password'],
-            $args['smtp_server'],
-            $args['smtp_port'],
-        );
-        $transport = Transport::fromDsn($dsn);
-        $mailer = new Mailer($transport);
+        process_direct_attachments($message, $args);
 
-        $from = new Address($args['sender_email'], $args['sender_name']);
-        $to = new Address($args['recipient_email'], $args['recipient_name']);
-
-        // Compose the message
-        $message = (new Email())
-            ->subject($args['subject'])
-            ->from($from)
-            ->to($to)
-            ->text($txt)
-            ->html($html);
-
-        // Attachments part
-        if (isset($args['attachments'])) {
-            foreach ($args['attachments'] as $attachment) {
-                if (!isset($attachment['filename'], $attachment['content'], $attachment['type'])) {
-                    error_log('Invalid attachment data: ' . dump($attachment));
-                    continue;
-                }
-
-                $message->attach($attachment['content'], $attachment['filename'], $attachment['type']);
-            }
-        }
-
-        $filesStatuses = [];
-
-        if (isset($args['attachment_urls'])) {
-            // Create a Guzzle client
-            $client = new Client();
-
-            foreach ($args['attachment_urls'] as $attachment) {
-                if (!isset($attachment['filename'], $attachment['type'], $attachment['url'])) {
-                    error_log('Invalid attachment data: ' . dump($attachment));
-                    continue;
-                }
-
-                // Download using Guzzle
-                try {
-                    $response = $client->get($attachment['url']);
-
-                    $status = $response->getStatusCode();
-                    $filesStatuses[] = $status;
-
-                    if ($status !== 200) {
-                        error_log("Failed to download {$attachment['url']}: Status {$status}");
-
-                        continue;
-                    }
-
-                    $content = $response->getBody()->getContents();
-                } catch (Exception $e) {
-                    return ['status' => ERROR, 'result' => 'Failed to download: ' . $e->getMessage()];
-                }
-
-                $message->attach($content, $attachment['filename'], $attachment['type']);
-            }
+        $attachmentResult = process_attachment_urls($message, $args);
+        if (!$attachmentResult['success']) {
+            return $attachmentResult['error'];
         }
 
         $mailer->send($message);
 
+        $filesStatuses = $attachmentResult['filesStatuses'];
         return ['status' => OK, 'filesStatuses' => $filesStatuses];
     } catch (Throwable $e) {
         return ['status' => ERROR, 'result' => 'Failed to send: ' . $e->getMessage()];
