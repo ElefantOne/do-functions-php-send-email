@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "24eb6e998aee57e62a628e78b0a8bd01",
+    "content-hash": "fc449c6cbb88828a5800bd67a9c73159",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -1737,16 +1737,16 @@
     "packages-dev": [
         {
             "name": "carthage-software/mago",
-            "version": "1.12.0",
+            "version": "1.13.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carthage-software/mago.git",
-                "reference": "b3c65c9fb656e53f62d853484f8fd0d36427a76f"
+                "reference": "565646d4b0af5301b923dd0f2735a5a8868f1e90"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carthage-software/mago/zipball/b3c65c9fb656e53f62d853484f8fd0d36427a76f",
-                "reference": "b3c65c9fb656e53f62d853484f8fd0d36427a76f",
+                "url": "https://api.github.com/repos/carthage-software/mago/zipball/565646d4b0af5301b923dd0f2735a5a8868f1e90",
+                "reference": "565646d4b0af5301b923dd0f2735a5a8868f1e90",
                 "shasum": ""
             },
             "require": {
@@ -1781,7 +1781,7 @@
             ],
             "support": {
                 "issues": "https://github.com/carthage-software/mago/issues",
-                "source": "https://github.com/carthage-software/mago/tree/1.12.0"
+                "source": "https://github.com/carthage-software/mago/tree/1.13.3"
             },
             "funding": [
                 {
@@ -1789,7 +1789,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-25T05:59:43+00:00"
+            "time": "2026-03-02T05:49:03+00:00"
         }
     ],
     "aliases": [],
@@ -1801,5 +1801,5 @@
         "php": ">=8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
